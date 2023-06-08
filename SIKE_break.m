@@ -1,10 +1,10 @@
-load "richelot_aux_strategy.m";
+load "richelot_formulae_strategy.m";
 load "uvtable.m";
-load "castryck_decru_shortcut.m";
+load "comp_attack.m";
 
 
-//a := 110; b := 67;
-a := 216; b:= 137; //"SIKEp434"
+a := 110; b := 67;
+//a := 216; b:= 137; //"SIKEp434"
 //a := 250; b:= 159; //"SIKEp503"
 //a := 305; b:= 192; //"SIKEp610"
 //a := 372; b:= 239; //"SIKEp751"

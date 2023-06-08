@@ -1,4 +1,4 @@
-load "richelot_formulae.m"; 
+load "richelot_aux_strategy.m"; 
 load "uvtable.m"; 
 
 function ComputationalAttack(E_start, P2, Q2, EB, PB, QB, two_i,P3, Q3)
@@ -43,7 +43,7 @@ function ComputationalAttack(E_start, P2, Q2, EB, PB, QB, two_i,P3, Q3)
     P_c := u*P2 + v*two_i(P2); for taut in tau_tilde do P_c := taut(P_c); end for;
     Q_c := u*Q2 + v*two_i(Q2); for taut in tau_tilde do Q_c := taut(Q_c); end for;
     tim4 := Cputime();
-    split, chain, E1, E2 := Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai);
+    split, chain, E1, E2 := Does22ChainSplitSpeedup(C, EB, [[2^alp*P_c,2^alp*PB],[2^alp*Q_c,2^alp*QB]], ai);//Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai);
     print "Chain took ", Cputime(tim4), "seconds.";
     if split then
       print "Glue-and-split! The first bet1 digits are determined";
@@ -52,30 +52,26 @@ function ComputationalAttack(E_start, P2, Q2, EB, PB, QB, two_i,P3, Q3)
   end for;
 
   
-   //  EB <- E <- E_start
+   //  EB <- Eguess <- E_start
    //  |    |
    //  v    v
-   //  C1-> C
-   //
-   // chain: C x EB -> E x C1
+   //  CB-> C
 
-  E, _ := Pushing3Chain(E_start, tauhatkernel, bet1);
+  Eguess, _ := Pushing3Chain(E_start, tauhatkernel, bet1);
 
   // Computing the 3^b torsion in C 
   P3c := u*P3 + v*two_i(P3); Q3c := u*Q3 + v*two_i(Q3);
   for isog in tau_tilde do P3c := isog(P3c); end for; 
   for isog in tau_tilde do Q3c := isog(Q3c); end for; 
   
-  // Determine which curve is C1 or E
-  if jInvariant(E2) eq jInvariant(E) then 
-    C1 := E1; 
+  if jInvariant(E2) eq jInvariant(Eguess) then 
+    CB := E1; 
     index := 1;
   else 
-    C1 := E2; 
+    CB := E2; 
     index := 2; 
   end if;
-
-  function chain_evaluation(c, X) // Evaluates chain on [X,Id(EB)] and outputs the image on C1
+  function apply_chain(c, X)
     X := [X, Id(EB)];
     tim5 := Cputime();
 
@@ -85,24 +81,24 @@ function ComputationalAttack(E_start, P2, Q2, EB, PB, QB, two_i,P3, Q3)
     print "This took ", Cputime(tim5), "seconds.";
     return X[index]; 
   end function; 
-  P3c_CB := C1 ! chain_evaluation(chain, P3c);
-  Q3c_CB := C1 ! chain_evaluation(chain, Q3c);
+  P3c_CB := CB ! apply_chain(chain, P3c);
+  Q3c_CB := CB ! apply_chain(chain, Q3c);
  
 
 
-  // Generate points of order p+1 on curve C1 which has order (p+1)^2
-  p := Characteristic(BaseField(C1)); 
+  // Generate points of order p+1 on curve CB which has order (p+1)^2
+  p := Characteristic(BaseField(CB)); 
   while true do 
-    P := Random(C1); 
-    if (((p+1) div 2) * P ne Id(C1)) and (((p+1) div 3) * P ne Id(C1)) then
+    P := Random(CB); 
+    if (((p+1) div 2) * P ne Id(CB)) and (((p+1) div 3) * P ne Id(CB)) then
       P3_CB := ((p+1) div 3^b) * P;
       break;
     end if;
   end while; 
 
   while true do
-    Q := Random(C1);
-    if ((p+1) div 2) * Q ne Id(C1) and ((p+1) div 3) * Q ne Id(C1) then
+    Q := Random(CB);
+    if ((p+1) div 2) * Q ne Id(CB) and ((p+1) div 3) * Q ne Id(CB) then
             w := WeilPairing(P, Q, p + 1); 
             if w^((p+1) div 2) ne 1 and w^((p+1) div 3) ne 1 then
                 Q3_CB := ((p+1) div 3^b) * Q;
@@ -115,15 +111,17 @@ function ComputationalAttack(E_start, P2, Q2, EB, PB, QB, two_i,P3, Q3)
   g := WeilPairing(P3_CB, Q3_CB,3^b); 
   Z3b := Integers(3^b);
 
-  tim1 := Cputime();
+  tim10 := Cputime();
   for G in [P3_CB, Q3_CB] do
+    tim10 := Cputime();
     xp := fast_log3(WeilPairing(P3c_CB, G, 3^b),g);
+    print "discrete log duurde ", Cputime(tim10), "seconds.";
     xq := fast_log3(WeilPairing(Q3c_CB, G, 3^b),g);
     if ((xq mod 3) ne 0) then
       sk := Integers() ! (-( Z3b ! xp)/(Z3b ! xq)); 
     end if; 
   end for;
-  print "Fast discrete log: ", Cputime(tim1), "seconds.";
+  
 
   t := Cputime(tim);
   // Check 
@@ -132,7 +130,7 @@ function ComputationalAttack(E_start, P2, Q2, EB, PB, QB, two_i,P3, Q3)
 
   if succes then
     print "Bob's secret key = ", sk; 
-    print "In total, this took ", t, "seconds.";
+    print "This took ", t, "seconds.";
   else 
     print "Failed";
   end if; 
