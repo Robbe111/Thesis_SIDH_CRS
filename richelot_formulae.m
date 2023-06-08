@@ -1,4 +1,19 @@
-function FromProdToJac(C, E, P_c, Q_c, P, Q, a)
+/*
+* Author: Robbe Vermeiren 
+* Accompanying code for my thesis about "Cryptanalysis of an isogeny-based system and its applications" 
+*/
+
+function FromProdToJac(C, E, P_c, Q_c, P, Q, a) // glue step: (2,2)-isogeny
+  /*
+  * INPUT:  - C, E           = (C x E) product of elliptic curves
+  *         - P_c, Q_c, P, Q = Define the kernel of the glue step: <(P_c,P), (Q_c, Q)>
+            - a              = length of (2,2)-chain
+  *        
+  * OUTPUT: - h                  = genus-2 codomain curve
+            - imPcP[1], imPcP[2] = image of (Pc,P) under isogeny
+            - imQcQ[1], imQcQ[2] = image of (Qc,Q) under isogeny
+            - isogeny            = (2,2)-isogeny 
+  */
   Fp2 := BaseField(C);
   R<x> := PolynomialRing(Fp2);
   
@@ -64,7 +79,16 @@ function FromProdToJac(C, E, P_c, Q_c, P, Q, a)
 end function; 
 
 
-function FromJacToJac(h, D11, D12, D21, D22, a)
+function FromJacToJac(h, D11, D12, D21, D22, a) // normal step: (2,2)-isogeny
+ /*
+  * INPUT:  - h                  = genus-2 curve
+  *         - D11, D12, D21, D22 = Divisors which define the kernel of the glue step: <(P_c,P), (Q_c, Q)>
+  *         - a                  = Order of [D11,D12] and [D21,D22] on Jac(h)
+  * OUTPUT: - h                  = genus-2 codomain curve
+  *         - imD1[1], imD1[2]   = image of [D11,D12] under isogeny
+  *         - imD2[1], imD2[2]   = image of [D2,D221] under isogeny
+  *         - isogeny            = (2,2)-isogeny 
+  */
   R<x> := Parent(h);
   Fp2 := BaseRing(R);
 
@@ -147,7 +171,13 @@ function FromJacToJac(h, D11, D12, D21, D22, a)
   return hnew, imD1[1], imD1[2], imD2[1], imD2[2], isogeny;
 end function;
 
-function FromJacToProd(G1,G2,G3)
+function FromJacToProd(G1,G2,G3) //split step: (2,2)-isogeny
+/*
+*  INPUT:  - G1,G2,G3 = define the domain curve y^2 = G1(x)G2(x)G3(x)
+*
+*  OUTPUT: - isogeny  = (2,2)-isogeny
+*          - E1, E2   = Codomain (E1 x E2) of isogeny
+*/
   h := G1*G2*G3; 
   R<x> := Parent(h);
   Fp2 := BaseRing(R);
@@ -166,8 +196,8 @@ function FromJacToProd(G1,G2,G3)
   a := ad/d;
   
   // Apply transform G(x) -> G((a*x+b)/(x+d))*(x+d)^2
-    // The coefficients of x^2 are H2 := M * (1, a, a^2) 
-    // The coefficients of 1 are H0 := M * (d^2, b*d, b^2)
+  // The coefficients of x^2 are H2 := M * (1, a, a^2) 
+  // The coefficients of 1 are H0 := M * (d^2, b*d, b^2)
 
   H2 := M * Matrix(Fp2, 3, 1, [1,a,a*a]); 
   H0 := M * Matrix(Fp2, 3, 1, [d*d, b*d, b*b]);
@@ -251,6 +281,15 @@ function FromJacToProd(G1,G2,G3)
 end function;
 
 function Does22ChainSplit(C, E, P_c, Q_c, P, Q, a)
+  /*
+  * INPUT:  - C, E           = (C x E) product of elliptic curves
+  *         - P_c, Q_c, P, Q = defines the kernel of (C x E)[2^a]: <(P_c,P), (Q_c, Q)>
+            - a              = length of (2,2)-chain
+  *        
+  * OUTPUT: - bool: boolean value; true if chain splits, false otherwise  
+            - chain: (2^a,2^a)-isogeny 
+            - E1, E2: codomain E1 x E2; product of elliptic curves
+  */
   chain := []; 
   Fp2 := BaseField(C);
 
@@ -292,7 +331,16 @@ end function;
 
 
 
+
 function Pushing3Chain(E, P, i) // compute chain of isogenies quotienting out a point P of order 3^i
+  /*
+    * INPUT:  - E     = elliptic curve
+    *         - P     = point of order 3^i on E
+    *         - i     = integer
+    *        
+    * OUTPUT: - C     = codomain curve isomorphic to E/<P> 
+              - chain = 3^i isogeny
+    */
   Fp2 := BaseField(E);
   R<x> := PolynomialRing(Fp2);
   chain := [];
@@ -309,8 +357,13 @@ end function;
 
 
 
-
-function JacobianDouble(h,u,v)
+function JacobianDouble(h,u,v) 
+  /*
+    * INPUT:  - h     = genus-2 curve
+    *         - u, v  = Mumford coordinates of a point P on Jac(h)
+    *        
+    * OUTPUT: - Dx, Dy = Mumford coordinates of 2*P on Jac(h)
+    */
   assert Degree(u) eq 2;
 
   q, r := Quotrem(u,2*v);
@@ -330,6 +383,14 @@ function JacobianDouble(h,u,v)
 end function;
 
 function JacobianDoubles(h,u,v,n)
+/*  
+    * Computing 2^n*P where P = [u,v] (Mumford coordinates) 
+    *
+    * INPUT:  - h     = genus-2 curve
+    *         - u, v  = Mumford coordinates of a point P on Jac(h)
+              - n     =  integer     
+    * OUTPUT: - Dx, Dy = Mumford coordinates of 2^n*P on Jac(h)
+    */
   for i in [1..n] do
     u, v := JacobianDouble(h,u,v);
   end for;
@@ -339,7 +400,13 @@ function JacobianDoubles(h,u,v,n)
   return u, v; 
 end function;
 
-function fast_log3(x,base) // Discrete log function for which the order of the input has order 3^k 
+function fast_log3(x,base)
+  /*
+    * INPUT:  - x    = element in Fp^2
+    *         - base = element in Fp^2
+    *        
+    * OUTPUT: - dlog = integer such that base^dlog = x 
+    */
   Fp2 := Parent(x);
   powers := [base];
   bs := base;
@@ -373,3 +440,4 @@ function fast_log3(x,base) // Discrete log function for which the order of the i
   dlog := &+[digits[i+1]*3^i: i in [0..#digits-1]]; 
   return dlog;
 end function;
+

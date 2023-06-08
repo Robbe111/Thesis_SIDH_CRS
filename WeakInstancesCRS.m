@@ -1,6 +1,19 @@
+/*
+* Author: Robbe Vermeiren 
+* Accompanying code for my thesis about "Cryptanalysis of an isogeny-based system and its applications" 
+*/
+
+
 load "richelot_formulae.m"; 
 
 function GeneratePoint(E,p,order)
+    /*
+    * INPUT:  - E     = elliptic curve
+    *         - p     = integer that divides order
+    *         - order = order of E
+    *        
+    * OUTPUT: - P     = point of order p on E
+    */
     // Return point with order p on E
     repeat 
         P := (order div p)*Random(E); 
@@ -9,6 +22,14 @@ function GeneratePoint(E,p,order)
 end function;
 
 function Pushing2Chain(E, P, i) // compute chain of isogenies quotienting out a point P of order 2^i
+    /*
+    * INPUT:  - E     = elliptic curve
+    *         - P     = point of order 2^i on E
+    *         - i     = integer
+    *        
+    * OUTPUT: - C     = codomain curve isomorphic to E/<P> 
+              - chain = 2^i isogeny
+    */
   Fp := BaseField(E);
   R<x> := PolynomialRing(Fp);
   chain := [];
@@ -24,10 +45,18 @@ function Pushing2Chain(E, P, i) // compute chain of isogenies quotienting out a 
 end function;
 
 function EvaluateDualIsogeny(chain,P)
+    /*
+    * INPUT:  - chain = isogeny
+    *         - P     = Point in codomain of chain
+    *         
+    *        
+    * OUTPUT: - P     = evaluation of P under the dual of chain
+    */
+    P1 := P; 
   for i := #chain to 1 by -1 do
-    P := DualIsogeny(chain[i])(P);
+    P1 := DualIsogeny(chain[i])(P1);
   end for;
-  return P; 
+  return P1; 
 end function;
 
 function EvaluateIsogeny(chain,P)
@@ -49,7 +78,19 @@ m := 2^15;
 
 //////////////////////////////////// ATTACK ////////////////////////////////
 
-function ActionOnTorsion(d,isogeny,E2) // secret isogeny as input to check if we have the correct mu
+function ActionOnTorsion(d,isogeny,E2) 
+    /*
+    * INPUT:  - d       = degree of isogeny
+    *         - isogeny = secret isogeny 
+    *         - E2      = codomain of isogeny
+    *        
+    * OUTPUT: - Q01,R01 = generators of E1[m]
+              - Q02,R02 = generators of E2[m] where Q02 = isogeny(Q01) and R02 = isogeny(R01)
+              
+                            
+    NOTE: we give the secret isogeny as input to check if we have the correct mu(line 118)
+    */
+
 
     // Generators of E[2^30]
     repeat
@@ -123,11 +164,15 @@ function ActionOnTorsion(d,isogeny,E2) // secret isogeny as input to check if we
     lambda_d := Log(g1,g2);
     lambda := (Integers(m) ! lambda_d)/(Integers(m) ! d); lambda_inverse := Integers() ! (lambda^(-1)); 
 
-    return Q01,R01,Q02, lambda_inverse*R02;
+    R02 := lambda_inverse*R02;
+    return Q01,R01,Q02, R02;
 end function;
 
 
 function example1()
+    /*
+        Example1 corresponding to section 5.2
+    */
     d := 5*7*19*23;
     // d = 5*7*19*23 en dan 2^14 - d = 33^2
     Enew := E1;
@@ -161,6 +206,10 @@ function example1()
 end function;
 
 function example2()
+    /*
+        Example2 corresponding to section 5.3
+    */
+
     d := 5^2*7*11^2*19*23*29; 
 
     // d = 5^2*7*11^2*19*23*29, thus 2^28 - d = 291^2
@@ -285,6 +334,8 @@ end function;
 
 
 
+
+// Uncomment the example that you want to run
 chain,index,d := example1();
 //chain,index,d := example2();
 

@@ -1,7 +1,23 @@
+/*
+* Author: Robbe Vermeiren 
+* Accompanying code for my thesis about "Cryptanalysis of an isogeny-based system and its applications" 
+*/
+
 load "richelot_aux_strategy.m"; 
 load "uvtable.m"; 
 
 function ComputationalAttack(E_start, P2, Q2, EB, PB, QB, two_i,P3, Q3)
+/*
+* INPUT:  - E_start = Starting curve in SIKE
+*         - P2, Q2  = generators of E_start[2^a] 
+*         - EB      = Bob's elliptic curve in SIKE
+*         - PB, QB  = images of P2, Q2 in EB under Bob's the secret isogeny
+*         - two_i   = Endomorphism on E_start
+*         - P3, Q3  = generators of E_start[3^b]
+* 
+* OUTPUT: - sk      = Bob's secret key (if the attack succeeds)
+*
+*/
 
   tim := Cputime();
   // gathering the alpha_i, u, v from table

@@ -1,4 +1,16 @@
+/*
+* Author: Robbe Vermeiren 
+* Accompanying code for my thesis about "Cryptanalysis of an isogeny-based system and its applications" 
+*/
+
 function FromProdToJac(C, E, kernel)
+ /*
+  * INPUT:  - C, E           = (C x E) product of elliptic curves
+  *         - kernel         = list [P_c, Q_c, P, Q] that defines the kernel of the glue step: <(P_c,P), (Q_c, Q)>
+  *        
+  * OUTPUT: - h                  = genus-2 codomain curve
+            - isogeny            = (2,2)-isogeny 
+  */
   Fp2 := BaseField(C);
   R<x> := PolynomialRing(Fp2);
 
@@ -65,6 +77,13 @@ function FromProdToJac(C, E, kernel)
 end function; 
 
 function FromJacToJac(h, kernel)
+  /*
+    * INPUT:  - h                  = genus-2 curve
+    *         - kernel             = list [D11, D12, D21, D22] of divisors which define the kernel of the glue step: <(P_c,P), (Q_c, Q)>
+    *      
+    * OUTPUT: - hnew               = genus-2 codomain curve
+    *         - isogeny            = (2,2)-isogeny 
+    */
   R<x> := Parent(h);
   Fp2 := BaseRing(R);
 
@@ -145,6 +164,12 @@ function FromJacToJac(h, kernel)
 end function;
 
 function FromJacToProd(G1,G2,G3)
+/*
+*  INPUT:  - G1,G2,G3 = define the domain curve y^2 = G1(x)G2(x)G3(x)
+*
+*  OUTPUT: - isogeny  = (2,2)-isogeny
+*          - E1, E2   = Codomain (E1 x E2) of isogeny
+*/
   h := G1*G2*G3; 
   R<x> := Parent(h);
   Fp2 := BaseRing(R);
@@ -232,6 +257,18 @@ end function;
 
 
 function Does22ChainSplitSpeedup(C, E, kernel, n)
+  /*
+  * INPUT:  - C, E           = (C x E) product of elliptic curves
+  *         - kernel         = list [P_c, Q_c, P, Q] that defines the kernel of (C x E)[2^a]: <(P_c,P), (Q_c, Q)>
+            - a              = length of (2,2)-chain
+  *        
+  * OUTPUT: - bool: boolean value; true if chain splits, false otherwise  
+            - chain: (2^a,2^a)-isogeny 
+            - E1, E2: codomain E1 x E2; product of elliptic curves
+  */
+
+
+
     // Compute (2^n,2^n)-chain with domain CxE
     // kernel := [[Pc, P], [Qc, Q]]
     chain := []; 
@@ -342,6 +379,14 @@ end function;
 
 
 function Pushing3Chain(E, P, i) // compute chain of isogenies quotienting out a point P of order 3^i
+  /*
+    * INPUT:  - E     = elliptic curve
+    *         - P     = point of order 3^i on E
+    *         - i     = integer
+    *        
+    * OUTPUT: - C     = codomain curve isomorphic to E/<P> 
+              - chain = 3^i isogeny
+    */
   Fp2 := BaseField(E);
   R<x> := PolynomialRing(Fp2);
   chain := [];
@@ -358,7 +403,13 @@ end function;
 
 
 
-function JacobianDouble(h,u,v)
+function JacobianDouble(h,u,v) 
+  /*
+    * INPUT:  - h     = genus-2 curve
+    *         - u, v  = Mumford coordinates of a point P on Jac(h)
+    *        
+    * OUTPUT: - Dx, Dy = Mumford coordinates of 2*P on Jac(h)
+    */
   assert Degree(u) eq 2;
 
   q, r := Quotrem(u,2*v);
@@ -378,6 +429,14 @@ function JacobianDouble(h,u,v)
 end function;
 
 function JacobianDoubles(h,u,v,n)
+/*  
+    * Computing 2^n*P where P = [u,v] (Mumford coordinates) 
+    *
+    * INPUT:  - h     = genus-2 curve
+    *         - u, v  = Mumford coordinates of a point P on Jac(h)
+              - n     =  integer     
+    * OUTPUT: - Dx, Dy = Mumford coordinates of 2^n*P on Jac(h)
+    */
   for i in [1..n] do
     u, v := JacobianDouble(h,u,v);
   end for;
@@ -388,6 +447,12 @@ function JacobianDoubles(h,u,v,n)
 end function;
 
 function fast_log3(x,base)
+  /*
+    * INPUT:  - x    = element in Fp^2
+    *         - base = element in Fp^2
+    *        
+    * OUTPUT: - dlog = integer such that base^dlog = x 
+    */
   Fp2 := Parent(x);
   powers := [base];
   bs := base;
